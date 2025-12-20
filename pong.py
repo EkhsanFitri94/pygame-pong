@@ -19,8 +19,12 @@ PADDLE_SPEED = 7
 
 # Ball dimensions
 BALL_SIZE = 15
-BALL_SPEED_X = 5
-BALL_SPEED_Y = 5
+# FIX: Reduced ball speed for better gameplay
+BALL_SPEED_X = 4
+BALL_SPEED_Y = 4
+
+# Score limit to end the game
+SCORE_LIMIT = 7
 
 # --- Initialize Pygame ---
 pygame.init()
@@ -114,20 +118,44 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        
+        # Handle game over input using events
+        if player_score >= SCORE_LIMIT or opponent_score >= SCORE_LIMIT:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Reset scores and ball
+                    player_score = 0
+                    opponent_score = 0
+                    reset_ball()
+                if event.key == pygame.K_ESCAPE:
+                    running = False
 
-    handle_paddle_movement()
+    # 2. Update Game State & Draw
+    # Check for Game Over state
+    if player_score >= SCORE_LIMIT or opponent_score >= SCORE_LIMIT:
+        # Game Over logic
+        screen.fill(BLACK)
+        if player_score >= SCORE_LIMIT:
+            win_text = font.render("YOU WIN!", True, WHITE)
+        else:
+            win_text = font.render("OPPONENT WINS!", True, WHITE)
+        
+        screen.blit(win_text, (SCREEN_WIDTH // 2 - 120, SCREEN_HEIGHT // 2 - 50))
+        restart_text = font.render("Press SPACE to play again or ESC to quit", True, WHITE)
+        screen.blit(restart_text, (SCREEN_WIDTH // 2 - 350, SCREEN_HEIGHT // 2 + 20))
+    else:
+        # Game is running
+        handle_paddle_movement()
+        
+        # FIX: The opponent AI logic was missing. It's now added back.
+        # Simple AI for the opponent
+        if opponent_paddle.centery < ball.centery:
+            opponent_paddle.y += PADDLE_SPEED - 3 # Make it slightly slower
+        if opponent_paddle.centery > ball.centery:
+            opponent_paddle.y -= PADDLE_SPEED - 3
 
-    # 2. Update Game State
-    handle_ball_movement()
-
-    # Simple AI for the opponent
-    if opponent_paddle.centery < ball.centery:
-        opponent_paddle.y += PADDLE_SPEED - 3 # Make it slightly slower
-    if opponent_paddle.centery > ball.centery:
-        opponent_paddle.y -= PADDLE_SPEED - 3
-
-    # 3. Draw Everything
-    draw_objects()
+        handle_ball_movement()
+        draw_objects()
 
     # Update the full display
     pygame.display.flip()
